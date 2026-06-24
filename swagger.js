@@ -1,4 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+require('dotenv').config();
+
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
 
 const options = {
   definition: {
@@ -10,12 +13,12 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000',
-        description: 'Development server',
+        url: SERVER_URL,
+        description: 'Server',
       },
     ],
   },
-  apis: ['./index.js', './routes/*.js'], // files containing annotations
+  apis: ['./index.js', './routes/*.js'],
 };
 
 const specs = swaggerJsdoc(options);

@@ -2,6 +2,8 @@ const pool = require('../db');
 const fs = require('fs');
 const path = require('path');
 
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+
 function deleteFile(filePath) {
   if (!filePath) return;
   const relative = filePath.startsWith('/') ? filePath.slice(1) : filePath;
@@ -44,7 +46,7 @@ exports.getBlogs = async (req, res) => {
     const blogs = rows.map(blog => ({
       ...blog,
       image: blog.image && blog.image.startsWith('/uploads')
-        ? `http://localhost:5000${blog.image}`
+        ? `${SERVER_URL}${blog.image}`
         : blog.image
     }));
 
@@ -63,7 +65,7 @@ exports.getBlogBySlug = async (req, res) => {
 
     const blog = rows[0];
     blog.image = blog.image && blog.image.startsWith('/uploads')
-      ? `http://localhost:5000${blog.image}`
+      ? `${SERVER_URL}${blog.image}`
       : blog.image;
 
     const [relatedRows] = await pool.query(
@@ -74,7 +76,7 @@ exports.getBlogBySlug = async (req, res) => {
     const related = relatedRows.map(r => ({
       ...r,
       image: r.image && r.image.startsWith('/uploads')
-        ? `http://localhost:5000${r.image}`
+        ? `${SERVER_URL}${r.image}`
         : r.image
     }));
 
