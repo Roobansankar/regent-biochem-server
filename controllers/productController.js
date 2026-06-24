@@ -105,7 +105,7 @@ exports.updateProduct = async (req, res) => {
     if (oldRows.length === 0) return res.status(404).json({ error: 'Product not found' });
 
     const old = oldRows[0];
-    const parseArr = (v) => { try { return JSON.parse(v); } catch { return []; } };
+    const parseArr = (v) => { if (!v) return []; try { return JSON.parse(v); } catch { return []; } };
     const oldImages = parseArr(old.images);
     const oldBadges = parseArr(old.badgeImages);
 
@@ -168,7 +168,7 @@ exports.deleteProduct = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT images, badgeImages FROM products WHERE id = ?', [id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Product not found' });
-    const parseArr = (v) => { try { return JSON.parse(v); } catch { return []; } };
+    const parseArr = (v) => { if (!v) return []; try { return JSON.parse(v); } catch { return []; } };
     deleteFiles(parseArr(rows[0].images));
     deleteFiles(parseArr(rows[0].badgeImages));
     await pool.query('DELETE FROM products WHERE id = ?', [id]);
