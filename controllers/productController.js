@@ -47,7 +47,7 @@ exports.getProducts = async (req, res) => {
     const [totalRows] = await pool.query('SELECT COUNT(*) as total FROM products');
     const total = totalRows[0].total;
     const [rows] = await pool.query(
-      'SELECT id, title, slug, category, icon, description, application, industry, contamination_type, product_brand, cleaner_base, material, quality_seal, images, created_at FROM products ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      'SELECT id, title, slug, category, sort_order, icon, description, application, industry, contamination_type, product_brand, cleaner_base, material, quality_seal, images, created_at FROM products ORDER BY sort_order ASC, id ASC LIMIT ? OFFSET ?',
       [limit, offset]
     );
 
@@ -71,7 +71,7 @@ exports.getProducts = async (req, res) => {
 exports.getAllProducts = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM products ORDER BY created_at DESC'
+      'SELECT * FROM products ORDER BY sort_order ASC, id ASC'
     );
 
     const products = rows.map(p => parseProductRow(p));
@@ -263,6 +263,22 @@ function extractFields(req) {
 
   return fields;
 }
+
+exports.reorderProducts = async (req, res) => {
+  try {
+    const { orders } = req.body;
+    if (!Array.isArray(orders)) {
+      return res.status(400).json({ error: 'orders must be an array' });
+    }
+    for (const { id, sort_order } of orders) {
+      await pool.query('UPDATE products SET sort_order = ? WHERE id = ?', [sort_order, id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Reorder error:', err);
+    res.status(500).json({ error: 'Failed to reorder products' });
+  }
+};
 
 function parseProductRow(row) {
   const jsonFields = [

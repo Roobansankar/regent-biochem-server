@@ -41,6 +41,7 @@ const EXPECTED_COLUMNS = [
   'cleaner_base VARCHAR(255) DEFAULT NULL',
   'material TEXT',
   'quality_seal VARCHAR(255) DEFAULT NULL',
+  'sort_order INT DEFAULT 0',
 ];
 
 const initProductsDB = async () => {

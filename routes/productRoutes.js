@@ -15,6 +15,7 @@ router.get('/all', productController.getAllProducts);
 router.get('/flagship', productController.getFlagshipProducts);
 router.get('/slug/:slug', productController.getProductBySlug);
 router.get('/:id', productController.getProductById);
+router.patch('/reorder', productController.reorderProducts);
 router.delete('/:id', productController.deleteProduct);
 
 module.exports = router;
