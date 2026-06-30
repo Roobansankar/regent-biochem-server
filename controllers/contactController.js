@@ -1,4 +1,5 @@
 const pool = require('../db');
+const { sendContactEmail } = require('../utils/mailer');
 
 // @desc    Submit a contact message
 // @route   POST /api/contact
@@ -9,6 +10,13 @@ exports.submitMessage = async (req, res) => {
       'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)',
       [name, email, phone, subject, message]
     );
+
+    try {
+      await sendContactEmail({ name, email, phone, subject, message });
+    } catch (emailErr) {
+      console.error('Failed to send email notification:', emailErr.message);
+    }
+
     res.status(201).json({ id: result.insertId, message: 'Message submitted successfully' });
   } catch (err) {
     console.error(err);
