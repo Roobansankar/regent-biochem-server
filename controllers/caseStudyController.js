@@ -2,7 +2,7 @@ const pool = require('../db');
 const fs = require('fs');
 const path = require('path');
 
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = 'https://bio-chem.in' || 'http://localhost:5000';
 
 function deleteFile(filePath) {
   if (!filePath) return;
