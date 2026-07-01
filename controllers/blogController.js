@@ -11,6 +11,11 @@ function deleteFile(filePath) {
   try { fs.unlinkSync(fullPath); } catch {}
 }
 
+function sanitizeContent(str) {
+  if (!str) return str;
+  return str.replace(/&nbsp;/g, ' ');
+}
+
 exports.createBlog = async (req, res) => {
   const { title, slug, excerpt, content, category, author, read_time, tags, meta_title, meta_description, meta_keywords } = req.body;
   const image = req.file ? `/uploads/${req.file.filename}` : req.body.image;
@@ -18,7 +23,7 @@ exports.createBlog = async (req, res) => {
   try {
     const [result] = await pool.query(
       'INSERT INTO blogs (title, slug, excerpt, content, category, image, author, read_time, tags, meta_title, meta_description, meta_keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, slug, excerpt, content, category, image, author, read_time, tags, meta_title || null, meta_description || null, meta_keywords || null]
+      [title, slug, excerpt, sanitizeContent(content), category, image, author, read_time, tags, meta_title || null, meta_description || null, meta_keywords || null]
     );
     res.status(201).json({ id: result.insertId, message: 'Blog post created successfully' });
   } catch (err) {
@@ -92,7 +97,7 @@ exports.updateBlog = async (req, res) => {
   const { title, slug, excerpt, content, category, author, read_time, tags, meta_title, meta_description, meta_keywords } = req.body;
 
   let updateQuery = 'UPDATE blogs SET title=?, slug=?, excerpt=?, content=?, category=?, author=?, read_time=?, tags=?, meta_title=?, meta_description=?, meta_keywords=?';
-  let params = [title, slug, excerpt, content, category, author, read_time, tags, meta_title || null, meta_description || null, meta_keywords || null];
+  let params = [title, slug, excerpt, sanitizeContent(content), category, author, read_time, tags, meta_title || null, meta_description || null, meta_keywords || null];
 
   if (req.file) {
     const [old] = await pool.query('SELECT image FROM blogs WHERE id = ?', [id]);
