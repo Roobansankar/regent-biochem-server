@@ -1,16 +1,16 @@
 const pool = require('../db');
 
 exports.submitEmail = async (req, res) => {
-  const { email } = req.body;
+  const { email, page_source, blog_id, blog_slug } = req.body;
   if (!email) {
     return res.status(400).json({ error: 'Email is required' });
   }
   try {
     const [result] = await pool.query(
-      'INSERT INTO cta_submissions (email) VALUES (?)',
-      [email]
+      'INSERT INTO cta_submissions (email, page_source, blog_id, blog_slug) VALUES (?, ?, ?, ?)',
+      [email, page_source || null, blog_id || null, blog_slug || null]
     );
-    res.status(201).json({ id: result.insertId, message: 'Email submitted successfully' });
+    res.status(201).json({ id: result.insertId, message: 'Thank you! We received your email.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to submit email' });
