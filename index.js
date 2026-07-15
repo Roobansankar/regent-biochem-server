@@ -12,6 +12,7 @@ const initCtaDB = require('./initCtaDb');
 const initProductsDB = require('./initProductsDb');
 const initProductFiltersDB = require('./initProductFiltersDb');
 const initAuthDB = require('./initAuthDb');
+const initBlogSubscribersDB = require('./initBlogSubscribersDb');
 require('dotenv').config();
 
 // Route Imports
@@ -23,6 +24,7 @@ const ctaRoutes = require('./routes/ctaRoutes');
 const productRoutes = require('./routes/productRoutes');
 const productFilterRoutes = require('./routes/productFilterRoutes');
 const authRoutes = require('./routes/authRoutes');
+const subscriberRoutes = require('./routes/subscriberRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -45,6 +47,7 @@ initCtaDB();
 initProductsDB();
 initProductFiltersDB();
 initAuthDB();
+initBlogSubscribersDB();
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -75,6 +78,7 @@ app.use('/api/cta', ctaRoutes);
 app.use('/api/product-filters', productFilterRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/subscribers', subscriberRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

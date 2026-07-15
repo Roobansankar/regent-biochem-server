@@ -1,6 +1,7 @@
 const pool = require('../db');
 const fs = require('fs');
 const path = require('path');
+const { sendBlogNotificationEmail } = require('../utils/mailer');
 
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
 
@@ -26,6 +27,26 @@ exports.createBlog = async (req, res) => {
       [title, slug, excerpt, sanitizeContent(content), category, image, author, read_time, tags, meta_title || null, meta_description || null, meta_keywords || null]
     );
     res.status(201).json({ id: result.insertId, message: 'Blog post created successfully' });
+
+    // Send notification emails to subscribers (non-blocking)
+    try {
+      const [subscribers] = await pool.query('SELECT email, token FROM blog_subscribers WHERE unsubscribed_at IS NULL');
+      for (const sub of subscribers) {
+        try {
+          await sendBlogNotificationEmail({
+            subscriberEmail: sub.email,
+            blogTitle: title,
+            blogExcerpt: excerpt,
+            blogSlug: slug,
+            unsubscribeToken: sub.token,
+          });
+        } catch (emailErr) {
+          console.error('Failed to send blog notification to', sub.email, emailErr.message);
+        }
+      }
+    } catch (subErr) {
+      console.error('Failed to fetch subscribers:', subErr.message);
+    }
   } catch (err) {
     console.error(err);
     if (err.code === 'ER_DUP_ENTRY') {
