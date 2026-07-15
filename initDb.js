@@ -21,6 +21,7 @@ const initDB = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) NOT NULL,
+        country_code VARCHAR(5) DEFAULT '+91',
         phone VARCHAR(20),
         subject VARCHAR(255),
         message TEXT NOT NULL,
@@ -30,6 +31,18 @@ const initDB = async () => {
 
     await pool.query(createTableQuery);
     console.log('Table "contact_messages" ensured.');
+
+    // Migration: add country_code column if missing
+    try {
+      await pool.query('ALTER TABLE contact_messages ADD COLUMN country_code VARCHAR(5) DEFAULT "+91" AFTER email');
+      console.log('Added country_code column to contact_messages.');
+    } catch (err) {
+      if (err.code === 'ER_DUP_FIELDNAME' || err.errno === 1060) {
+        // Column already exists — ignore
+      } else {
+        console.error('Error adding country_code column:', err.message);
+      }
+    }
   } catch (err) {
     console.error('Error initializing database:', err);
   }

@@ -4,17 +4,21 @@ const { sendContactEmail } = require('../utils/mailer');
 // @desc    Submit a contact message
 // @route   POST /api/contact
 exports.submitMessage = async (req, res) => {
-  const { name, email, phone, subject, message } = req.body;
+  const { name, email, country_code, phone, subject, message } = req.body;
   try {
     const [result] = await pool.query(
-      'INSERT INTO contact_messages (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)',
-      [name, email, phone, subject, message]
+      'INSERT INTO contact_messages (name, email, country_code, phone, subject, message) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, country_code || '+91', phone, subject, message]
     );
 
     try {
-      await sendContactEmail({ name, email, phone, subject, message });
+      await sendContactEmail({ name, email, country_code, phone, subject, message });
     } catch (emailErr) {
-      console.error('Failed to send email notification:', emailErr.message);
+      console.error('=== EMAIL FAILED ===');
+      console.error('Message saved to DB but email not sent.');
+      console.error('Error:', emailErr.message);
+      console.error('Full error:', emailErr);
+      console.error('SMTP config - Host:', process.env.SMTP_HOST, 'User:', process.env.SMTP_USER, 'To:', process.env.MAIL_TO);
     }
 
     res.status(201).json({ id: result.insertId, message: 'Message submitted successfully' });
@@ -55,11 +59,11 @@ exports.getMessages = async (req, res) => {
 // @route   PUT /api/contact/:id
 exports.updateMessage = async (req, res) => {
   const { id } = req.params;
-  const { name, email, phone, subject, message } = req.body;
+  const { name, email, country_code, phone, subject, message } = req.body;
   try {
     const [result] = await pool.query(
-      'UPDATE contact_messages SET name=?, email=?, phone=?, subject=?, message=? WHERE id=?',
-      [name, email, phone, subject, message, id]
+      'UPDATE contact_messages SET name=?, email=?, country_code=?, phone=?, subject=?, message=? WHERE id=?',
+      [name, email, country_code || '+91', phone, subject, message, id]
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Message not found' });
     res.json({ message: 'Message updated successfully' });

@@ -59,6 +59,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
  *         id: { type: integer }
  *         name: { type: string }
  *         email: { type: string }
+ *         country_code: { type: string }
  *         phone: { type: string }
  *         subject: { type: string }
  *         message: { type: string }
