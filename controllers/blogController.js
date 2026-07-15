@@ -37,6 +37,7 @@ exports.createBlog = async (req, res) => {
             subscriberEmail: sub.email,
             blogTitle: title,
             blogExcerpt: excerpt,
+            blogCategory: category,
             blogSlug: slug,
             unsubscribeToken: sub.token,
           });
