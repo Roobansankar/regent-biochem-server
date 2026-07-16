@@ -6,6 +6,7 @@ const webpUpload = require('../middleware/uploadWebp');
 const uploadFields = webpUpload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'hero_image', maxCount: 1 },
+  { name: 'banner_image', maxCount: 1 },
 ], 'case-studies');
 
 router.post('/', uploadFields, caseStudyController.createCaseStudy);

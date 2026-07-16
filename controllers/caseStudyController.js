@@ -2,7 +2,7 @@ const pool = require('../db');
 const fs = require('fs');
 const path = require('path');
 
-const SERVER_URL = 'https://bio-chem.in' || 'http://localhost:5000';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
 
 function deleteFile(filePath) {
   if (!filePath) return;
@@ -19,10 +19,13 @@ const getImagePath = (req, field = 'image') => {
   return req.body[field] || null;
 };
 
-const prefixImage = (img) => {
+const prefixImage = (img, req) => {
   if (!img) return null;
   if (img.startsWith('http')) return img;
-  if (img.startsWith('/uploads')) return `${SERVER_URL}${img}`;
+  if (img.startsWith('/uploads')) {
+    const base = req ? `${req.protocol}://${req.get('host')}` : SERVER_URL;
+    return `${base}${img}`;
+  }
   return img;
 };
 
@@ -35,6 +38,7 @@ const parseBodyJSON = (val) => {
 exports.createCaseStudy = async (req, res) => {
   const image = getImagePath(req, 'image');
   const hero_image = getImagePath(req, 'hero_image');
+  const banner_image = getImagePath(req, 'banner_image');
   const body = req.body;
   const { meta_title, meta_description, meta_keywords } = body;
   const customerBackgroundPoints = parseBodyJSON(body.customerBackgroundPoints);
@@ -46,18 +50,18 @@ exports.createCaseStudy = async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO case_studies 
+      `INSERT INTO case_studies
       (slug, ref, title, industry, category, subindustry, application, product,
-       solution, image, hero_image, customerBackground,
+       solution, image, hero_image, banner_image, customerBackground,
        customerBackgroundPoints, businessChallengesDescription, businessChallenges,
        businessChallengesQuote, operationalSnapshot, costSnapshot,
        takeawaysDescription, takeaways, idealUseCases, outcome,
        meta_title, meta_description, meta_keywords)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         body.slug, body.ref, body.title, body.industry, body.category, body.subindustry,
         body.application, body.product,
-        body.solution, image, hero_image, body.customerBackground,
+        body.solution, image, hero_image, banner_image, body.customerBackground,
         JSON.stringify(customerBackgroundPoints), body.businessChallengesDescription,
         JSON.stringify(businessChallenges), body.businessChallengesQuote,
         JSON.stringify(operationalSnapshot), JSON.stringify(costSnapshot),
@@ -89,7 +93,7 @@ exports.getCaseStudies = async (req, res) => {
       [limit, offset]
     );
 
-    const caseStudies = rows.map(parseCaseStudy);
+    const caseStudies = rows.map(row => parseCaseStudy(row, req));
 
     res.json({ caseStudies, total, page, limit });
   } catch (err) {
@@ -104,7 +108,7 @@ exports.getCaseStudyBySlug = async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM case_studies WHERE slug = ?', [slug]);
     if (rows.length === 0) return res.status(404).json({ error: 'Case study not found' });
 
-    res.json({ caseStudy: parseCaseStudy(rows[0]) });
+    res.json({ caseStudy: parseCaseStudy(rows[0], req) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch case study' });
@@ -115,13 +119,15 @@ exports.updateCaseStudy = async (req, res) => {
   const { slug } = req.params;
   const image = getImagePath(req, 'image');
   const hero_image = getImagePath(req, 'hero_image');
+  const banner_image = getImagePath(req, 'banner_image');
   const body = req.body;
 
-  const [oldRows] = await pool.query('SELECT image, hero_image FROM case_studies WHERE slug = ?', [slug]);
+  const [oldRows] = await pool.query('SELECT image, hero_image, banner_image FROM case_studies WHERE slug = ?', [slug]);
   if (oldRows.length > 0) {
     const old = oldRows[0];
     if (req.files && req.files['image']) deleteFile(old.image);
     if (req.files && req.files['hero_image']) deleteFile(old.hero_image);
+    if (req.files && req.files['banner_image']) deleteFile(old.banner_image);
   }
   const { meta_title, meta_description, meta_keywords } = body;
   const customerBackgroundPoints = parseBodyJSON(body.customerBackgroundPoints);
@@ -135,7 +141,7 @@ exports.updateCaseStudy = async (req, res) => {
     const [result] = await pool.query(
       `UPDATE case_studies SET
         ref=?, title=?, industry=?, category=?, subindustry=?, application=?, product=?,
-        solution=?, image=?, hero_image=?, customerBackground=?,
+        solution=?, image=?, hero_image=?, banner_image=?, customerBackground=?,
         customerBackgroundPoints=?, businessChallengesDescription=?, businessChallenges=?,
         businessChallengesQuote=?, operationalSnapshot=?, costSnapshot=?,
         takeawaysDescription=?, takeaways=?, idealUseCases=?, outcome=?,
@@ -144,7 +150,7 @@ exports.updateCaseStudy = async (req, res) => {
       [
         body.ref, body.title, body.industry, body.category, body.subindustry,
         body.application, body.product,
-        body.solution, image, hero_image, body.customerBackground,
+        body.solution, image, hero_image, banner_image, body.customerBackground,
         JSON.stringify(customerBackgroundPoints), body.businessChallengesDescription,
         JSON.stringify(businessChallenges), body.businessChallengesQuote,
         JSON.stringify(operationalSnapshot), JSON.stringify(costSnapshot),
@@ -165,10 +171,11 @@ exports.updateCaseStudy = async (req, res) => {
 exports.deleteCaseStudy = async (req, res) => {
   const { slug } = req.params;
   try {
-    const [rows] = await pool.query('SELECT image, hero_image FROM case_studies WHERE slug = ?', [slug]);
+    const [rows] = await pool.query('SELECT image, hero_image, banner_image FROM case_studies WHERE slug = ?', [slug]);
     if (rows.length === 0) return res.status(404).json({ error: 'Case study not found' });
     deleteFile(rows[0].image);
     deleteFile(rows[0].hero_image);
+    deleteFile(rows[0].banner_image);
     await pool.query('DELETE FROM case_studies WHERE slug = ?', [slug]);
     res.json({ message: 'Case study deleted successfully' });
   } catch (err) {
@@ -177,11 +184,12 @@ exports.deleteCaseStudy = async (req, res) => {
   }
 };
 
-function parseCaseStudy(row) {
+function parseCaseStudy(row, req) {
   return {
     ...row,
-    image: prefixImage(row.image),
-    hero_image: prefixImage(row.hero_image),
+    image: prefixImage(row.image, req),
+    hero_image: prefixImage(row.hero_image, req),
+    banner_image: prefixImage(row.banner_image, req),
     customerBackgroundPoints: parseJsonField(row.customerBackgroundPoints),
     businessChallenges: parseJsonField(row.businessChallenges),
     operationalSnapshot: parseJsonField(row.operationalSnapshot),

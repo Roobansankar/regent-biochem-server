@@ -27,6 +27,7 @@ const authRoutes = require('./routes/authRoutes');
 const subscriberRoutes = require('./routes/subscriberRoutes');
 
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 5000;
 
 // Middleware

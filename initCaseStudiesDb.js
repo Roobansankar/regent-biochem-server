@@ -6,6 +6,7 @@ const EXPECTED_COLUMNS = [
   'meta_description TEXT',
   'meta_keywords TEXT',
   'hero_image VARCHAR(500) DEFAULT NULL',
+  'banner_image VARCHAR(500) DEFAULT NULL',
 ];
 
 const initCaseStudiesDB = async () => {
