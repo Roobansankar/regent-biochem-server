@@ -10,19 +10,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendBlogNotificationEmail({ subscriberEmail, blogTitle, blogExcerpt, blogCategory, blogSlug, unsubscribeToken }) {
+async function sendBlogNotificationEmail({ subscriberEmail, blogTitle, blogExcerpt, blogCategory, blogSlug, blogImage, unsubscribeToken }) {
   const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
   const blogUrl = `${FRONTEND_URL}/blog/${blogSlug}`;
   const blogsUrl = `${FRONTEND_URL}/blog`;
   const contactUrl = `${FRONTEND_URL}/contact`;
   const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
   const unsubscribeUrl = `${SERVER_URL}/api/subscribers/unsubscribe?token=${unsubscribeToken}`;
+  const logoUrl = `${FRONTEND_URL}/logo-email.png`;
 
   const html = `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e2e2">
-      <div style="background:#3D8A4B;padding:24px;text-align:center">
-        <h1 style="color:#fff;font-size:20px;margin:0">New Blog Post</h1>
+      <div style="background:#fff;padding:24px;text-align:center;border-bottom:1px solid #e2e2e2">
+        <img src="${logoUrl}" alt="Bio-Chem Logo" style="height:40px;width:auto;margin:0 auto 10px;display:block" />
+        <p style="margin:0;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase">
+          <span style="color:#3D8A4B">GREEN</span><span style="color:#111"> WAY TO </span><span style="color:#3D8A4B">GROWTH</span>
+        </p>
       </div>
+      ${blogImage ? `
+      <div style="width:100%;line-height:0">
+        <img src="${blogImage}" alt="${blogTitle}" style="width:100%;height:auto;display:block;max-height:280px;object-fit:cover" />
+      </div>
+      ` : ''}
       <div style="padding:32px;text-align:center">
         ${blogCategory ? `<span style="display:inline-block;background:#edf7f0;color:#3D8A4B;font-size:11px;font-weight:bold;padding:4px 12px;border-radius:4px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">${blogCategory}</span>` : ''}
         <h2 style="color:#111;font-size:18px;margin:0 0 12px;text-align:left">${blogTitle}</h2>

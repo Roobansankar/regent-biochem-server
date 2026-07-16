@@ -39,6 +39,7 @@ exports.createBlog = async (req, res) => {
             blogExcerpt: excerpt,
             blogCategory: category,
             blogSlug: slug,
+            blogImage: image && image.startsWith('/uploads') ? `${SERVER_URL}${image}` : image,
             unsubscribeToken: sub.token,
           });
         } catch (emailErr) {
